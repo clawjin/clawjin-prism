@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: public
+    schema: public
+    tables:
+      - name: raw_orders
+      - name: raw_ad_spend
