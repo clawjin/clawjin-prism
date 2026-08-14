@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLAWJIN PRISM™ — E-Commerce Profit Intelligence Platform</title>
+<style>
+  :root {
+    --bg-base: #060911;
+    --bg-surface: #0c1222;
+    --bg-card: #131c33;
+    --accent-indigo: #6366f1;
+    --accent-emerald: #10b981;
+    --accent-cyan: #06b6d4;
+    --accent-amber: #f59e0b;
+    --accent-rose: #f43f5e;
+    --accent-purple: #a855f7;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --border-color: #1e2d4d;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background-color: var(--bg-base); color: var(--text-primary); font-family: var(--font-sans); line-height: 1.5; min-height: 100vh; display: flex; flex-direction: column; }
+  nav { display: flex; justify-content: space-between; align-items: center; padding: 16px 32px; background: var(--bg-surface); border-bottom: 1px solid var(--border-color); }
+  .logo-group { display: flex; align-items: center; gap: 10px; font-size: 1.2rem; font-weight: 900; }
+  .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #6366f1, #a855f7); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .nav-right { display: flex; align-items: center; gap: 16px; }
+  .currency-btn { background: var(--bg-card); border: 1px solid var(--border-color); color: #38bdf8; padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 800; cursor: pointer; }
+  .screen-container { flex: 1; display: flex; align-items: center; justify-content: center; padding: 32px 16px; }
+  .screen { display: none; width: 100%; max-width: 1150px; }
+  .screen.active { display: block; }
+  .auth-card { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 16px; padding: 40px; max-width: 440px; margin: 0 auto; text-align: center; }
+  .auth-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 6px; }
+  .auth-sub { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 24px; }
+  .form-group { text-align: left; margin-bottom: 18px; }
+  .form-label { display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; }
+  .form-input { width: 100%; background: #080d1a; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 14px; color: #f8fafc; font-size: 0.95rem; }
+  .btn-primary-large { width: 100%; background: linear-gradient(135deg, #6366f1, #4338ca); color: white; font-weight: 800; font-size: 1rem; padding: 14px; border-radius: 8px; border: none; cursor: pointer; margin-top: 10px; }
+  .connect-card { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 16px; padding: 40px; max-width: 780px; margin: 0 auto; text-align: center; }
+  .connect-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 32px 0 28px; }
+  .connect-item { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; display: flex; align-items: center; justify-content: space-between; text-align: left; }
+  .connect-item.connected { border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.05); }
+  .connect-btn { background: #1e293b; border: 1px solid var(--border-color); color: var(--text-primary); padding: 8px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; cursor: pointer; }
+  .connect-btn.done { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+  .dash-container { max-width: 1150px; margin: 0 auto; }
+  .greeting-banner { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+  .hero-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .hero-kpi-card { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; text-align: center; }
+  .kpi-title { font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; margin-bottom: 6px; }
+  .kpi-hero-val { font-size: 2.1rem; font-weight: 900; font-family: var(--font-mono); }
+  .kpi-hero-sub { font-size: 0.8rem; color: #34d399; font-weight: 700; margin-top: 4px; }
+  .grid-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .panel-card { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 14px; padding: 22px; }
+  .panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; font-size: 0.95rem; font-weight: 800; }
+  .row-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 0.88rem; }
+  .val-highlight { font-family: var(--font-mono); font-weight: 700; }
+  .alert-box { background: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.3); border-radius: 10px; padding: 16px; display: flex; align-items: center; gap: 12px; margin-bottom: 24px; color: #fecdd3; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+  <nav>
+    <div class="logo-group">
+      <div class="logo-icon">🔮</div>
+      <span>CLAWJIN PRISM</span>
+    </div>
+    <div class="nav-right">
+      <span style="font-size: 0.8rem; color: var(--text-muted); font-family: var(--font-mono);" id="stepIndicator">STEP 1: FOUNDER AUTH</span>
+      <button class="currency-btn" onclick="toggleCurrency()" id="currencyToggle">₹ INR</button>
+    </div>
+  </nav>
+
+  <div class="screen-container">
+    <!-- SCREEN 1 -->
+    <div id="screen-auth" class="screen active">
+      <div class="auth-card">
+        <div style="font-size: 2.2rem; margin-bottom: 8px;">👋</div>
+        <h1 class="auth-title">Welcome to Prism</h1>
+        <p class="auth-sub">Enterprise E-Commerce Profit Intelligence Platform</p>
+        <div class="form-group">
+          <label class="form-label">Work Email</label>
+          <input type="email" class="form-input" value="founder@oversizedclothing.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" value="••••••••••••">
+        </div>
+        <button class="btn-primary-large" onclick="goToStep(2)">Create Account & Connect Store ➔</button>
+      </div>
+    </div>
+
+    <!-- SCREEN 2 -->
+    <div id="screen-connect" class="screen">
+      <div class="connect-card">
+        <h1 style="font-size: 1.8rem; font-weight: 800; margin-bottom: 6px;">Connect Your Business Data</h1>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">Authorize your store and advertising channels. Prism will automatically sync and calculate your net profit.</p>
+        <div class="connect-grid">
+          <div class="connect-item" id="item-shopify">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 1.6rem;">🛍️</span>
+              <div>
+                <div style="font-weight: 800;">Shopify Store</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);" id="status-shopify">Not Connected</div>
+              </div>
+            </div>
+            <button class="connect-btn" id="btn-shopify" onclick="connectSource('shopify')">Connect ➔</button>
+          </div>
+          <div class="connect-item" id="item-meta">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 1.6rem;">📣</span>
+              <div>
+                <div style="font-weight: 800;">Meta Ads (FB & IG)</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);" id="status-meta">Not Connected</div>
+              </div>
+            </div>
+            <button class="connect-btn" id="btn-meta" onclick="connectSource('meta')">Connect ➔</button>
+          </div>
+          <div class="connect-item" id="item-google">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 1.6rem;">🔎</span>
+              <div>
+                <div style="font-weight: 800;">Google Ads</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);" id="status-google">Not Connected</div>
+              </div>
+            </div>
+            <button class="connect-btn" id="btn-google" onclick="connectSource('google')">Connect ➔</button>
+          </div>
+          <div class="connect-item" id="item-tiktok">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 1.6rem;">🎵</span>
+              <div>
+                <div style="font-weight: 800;">TikTok Ads</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);" id="status-tiktok">Not Connected</div>
+              </div>
+            </div>
+            <button class="connect-btn" id="btn-tiktok" onclick="connectSource('tiktok')">Connect ➔</button>
+          </div>
+        </div>
+        <button class="btn-primary-large" id="btnLaunch" style="display: none; background: linear-gradient(135deg, #10b981, #059669);" onclick="goToStep(3)">
+          🚀 Launch Live Executive Dashboard ➔
+        </button>
+      </div>
+    </div>
+
+    <!-- SCREEN 3 -->
+    <div id="screen-dash" class="screen">
+      <div class="dash-container">
+        <div class="greeting-banner">
+          <div>
+            <h1 style="font-size: 2.1rem; font-weight: 900;">GOOD MORNING 👋</h1>
+            <div style="color: var(--text-secondary); font-size: 0.95rem;">Your Business Intelligence Briefing — Today, Aug 14, 2026</div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="connect-btn" onclick="goToStep(2)">🔄 Re-sync Data</button>
+            <button class="connect-btn" onclick="alert('Report PDF Generated!')">📥 Export PDF</button>
+          </div>
+        </div>
+
+        <div class="hero-kpis">
+          <div class="hero-kpi-card">
+            <div class="kpi-title">TOTAL SALES</div>
+            <div class="kpi-hero-val" id="cardSales">₹8.2L</div>
+            <div class="kpi-hero-sub">↑ 18.4% vs 7-day avg</div>
+          </div>
+          <div class="hero-kpi-card">
+            <div class="kpi-title">TOTAL ORDERS</div>
+            <div class="kpi-hero-val">342</div>
+            <div class="kpi-hero-sub">Avg Order: ₹2,398</div>
+          </div>
+          <div class="hero-kpi-card">
+            <div class="kpi-title">NET PROFIT</div>
+            <div class="kpi-hero-val" style="color: #34d399;" id="cardProfit">₹1.4L</div>
+            <div class="kpi-hero-sub">17.1% Net Margin</div>
+          </div>
+          <div class="hero-kpi-card">
+            <div class="kpi-title">BLENDED ROAS</div>
+            <div class="kpi-hero-val" style="color: #c084fc;">3.6×</div>
+            <div class="kpi-hero-sub" id="cardAds">Ad Spend: ₹2.28L</div>
+          </div>
+        </div>
+
+        <div class="alert-box">
+          <span style="font-size: 1.4rem;">⚠️</span>
+          <div><strong>CLAWJIN PRISM ALERT:</strong> Meta Ads CAC increased <strong>22%</strong> today. Shift ₹20K to Google PMax.</div>
+        </div>
+
+        <div class="grid-3col">
+          <div class="panel-card">
+            <div class="panel-head">
+              <span>📢 Advertising Spend</span>
+              <span style="color: #fbbf24;" id="totalAdsVal">₹2.28L Total</span>
+            </div>
+            <div class="row-item">
+              <span>Meta Ads (FB & IG)</span>
+              <span class="val-highlight" style="color: #38bdf8;" id="adMeta">₹1.35L (3.8x)</span>
+            </div>
+            <div class="row-item">
+              <span>Google & YouTube</span>
+              <span class="val-highlight" style="color: #38bdf8;" id="adGoogle">₹65K (4.2x)</span>
+            </div>
+            <div class="row-item">
+              <span>TikTok Ads</span>
+              <span class="val-highlight" style="color: #38bdf8;" id="adTiktok">₹28K (2.5x)</span>
+            </div>
+          </div>
+
+          <div class="panel-card">
+            <div class="panel-head">
+              <span>👥 Customer Breakdown</span>
+              <span style="color: #34d399;">342 Total</span>
+            </div>
+            <div class="row-item">
+              <span>New Customers</span>
+              <span class="val-highlight" style="color: #34d399;">231 (67.5%)</span>
+            </div>
+            <div class="row-item">
+              <span>Returning Loyal</span>
+              <span class="val-highlight" style="color: #c084fc;">111 (32.5%)</span>
+            </div>
+            <div class="row-item">
+              <span>Blended CAC</span>
+              <span class="val-highlight" style="color: #fbbf24;" id="cacVal">₹667 / cust</span>
+            </div>
+          </div>
+
+          <div class="panel-card">
+            <div class="panel-head">
+              <span>👕 Top Products</span>
+              <span style="color: #a5b4fc;">Ranked by Volume</span>
+            </div>
+            <div class="row-item">
+              <span>Oversized Black Hoodie</span>
+              <span class="val-highlight" style="color: #34d399;">182 Units (₹4.2L)</span>
+            </div>
+            <div class="row-item">
+              <span>Heavyweight Boxy Tee</span>
+              <span class="val-highlight" style="color: #38bdf8;">143 Units (₹1.8L)</span>
+            </div>
+            <div class="row-item">
+              <span>Relaxed Cargo Pant</span>
+              <span class="val-highlight" style="color: #38bdf8;">64 Units (₹1.5L)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  let isINR = true;
+  let count = 0;
+  function goToStep(s) {
+    document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+    if(s === 1) { document.getElementById('screen-auth').classList.add('active'); document.getElementById('stepIndicator').innerText = 'STEP 1: FOUNDER AUTH'; }
+    if(s === 2) { document.getElementById('screen-connect').classList.add('active'); document.getElementById('stepIndicator').innerText = 'STEP 2: 1-CLICK CONNECT'; }
+    if(s === 3) { document.getElementById('screen-dash').classList.add('active'); document.getElementById('stepIndicator').innerText = 'STEP 3: LIVE SCOREBOARD'; }
+  }
+  function connectSource(src) {
+    const item = document.getElementById('item-' + src);
+    const status = document.getElementById('status-' + src);
+    const btn = document.getElementById('btn-' + src);
+    status.innerText = "⏳ Authorizing via Prism...";
+    status.style.color = "#fbbf24";
+    setTimeout(() => {
+      item.classList.add('connected');
+      status.innerText = "● Connected & Ingested";
+      status.style.color = "#34d399";
+      btn.innerText = "✓ Synced";
+      btn.classList.add('done');
+      count++;
+      if(count >= 2) document.getElementById('btnLaunch').style.display = 'block';
+    }, 600);
+  }
+  function toggleCurrency() {
+    isINR = !isINR;
+    document.getElementById('currencyToggle').innerText = isINR ? '₹ INR' : '$ USD';
+    if(isINR) {
+      document.getElementById('cardSales').innerText = '₹8.2L';
+      document.getElementById('cardProfit').innerText = '₹1.4L';
+      document.getElementById('cardAds').innerText = 'Ad Spend: ₹2.28L';
+      document.getElementById('totalAdsVal').innerText = '₹2.28L Total';
+      document.getElementById('adMeta').innerText = '₹1.35L (3.8x)';
+      document.getElementById('adGoogle').innerText = '₹65K (4.2x)';
+      document.getElementById('adTiktok').innerText = '₹28K (2.5x)';
+      document.getElementById('cacVal').innerText = '₹667 / cust';
+    } else {
+      document.getElementById('cardSales').innerText = '$9,840';
+      document.getElementById('cardProfit').innerText = '$1,680';
+      document.getElementById('cardAds').innerText = 'Ad Spend: $2,736';
+      document.getElementById('totalAdsVal').innerText = '$2,736 Total';
+      document.getElementById('adMeta').innerText = '$1,620 (3.8x)';
+      document.getElementById('adGoogle').innerText = '$780 (4.2x)';
+      document.getElementById('adTiktok').innerText = '$336 (2.5x)';
+      document.getElementById('cacVal').innerText = '$8.00 / cust';
+    }
+  }
+</script>
+</body>
+</html>
