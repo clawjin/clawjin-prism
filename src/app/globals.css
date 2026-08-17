@@ -1,0 +1,512 @@
+@import "tailwindcss";
+
+/* ============================================================
+   Clawjin Prism — "Liquid Obsidian" (Apple-style)
+   Matte black base · white as the accent · smooth liquid glass
+   with moving specular reflections. Monochrome + chrome.
+   ============================================================ */
+
+/* Neutralize Tailwind's blue-tinted "slate" into warm zinc. */
+@theme {
+  --color-slate-50: #fafafa;
+  --color-slate-100: #f4f4f5;
+  --color-slate-200: #e4e4e7;
+  --color-slate-300: #d4d4d8;
+  --color-slate-400: #a1a1aa;
+  --color-slate-500: #71717a;
+  --color-slate-600: #52525b;
+  --color-slate-700: #3f3f46;
+  --color-slate-800: #27272a;
+  --color-slate-900: #18181b;
+  --color-slate-950: #09090b;
+}
+
+:root {
+  color-scheme: dark;
+  --angle: 0deg;
+}
+
+@property --angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: #0b0b0d;
+  color: #f4f4f5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+/* ------------------------------------------------------------
+   Liquid glass — matte obsidian with specular highlights
+   ------------------------------------------------------------ */
+
+.glass {
+  position: relative;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.07) 0%,
+    rgba(255, 255, 255, 0.02) 45%,
+    rgba(255, 255, 255, 0.015) 100%
+  );
+  -webkit-backdrop-filter: blur(26px) saturate(140%);
+  backdrop-filter: blur(26px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.03),
+    0 18px 48px -18px rgba(0, 0, 0, 0.85);
+}
+
+.glass-strong {
+  position: relative;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.11) 0%,
+    rgba(255, 255, 255, 0.03) 45%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  -webkit-backdrop-filter: blur(40px) saturate(150%);
+  backdrop-filter: blur(40px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -24px 48px -32px rgba(255, 255, 255, 0.07),
+    0 30px 80px -30px rgba(0, 0, 0, 0.9);
+}
+
+/* Moving liquid reflection sweeping across strong glass */
+.glass-strong::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    115deg,
+    transparent 25%,
+    rgba(255, 255, 255, 0.09) 42%,
+    rgba(255, 255, 255, 0.02) 56%,
+    transparent 72%
+  );
+  background-size: 260% 100%;
+  background-position: -140% 0;
+  animation: liquid-sheen 9s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes liquid-sheen {
+  0% { background-position: -140% 0; }
+  55%, 100% { background-position: 140% 0; }
+}
+
+.glass-subtle {
+  background: rgba(255, 255, 255, 0.03);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ------------------------------------------------------------
+   Chrome / white signature
+   ------------------------------------------------------------ */
+
+.text-gradient {
+  background: linear-gradient(100deg, #ffffff 0%, #d4d4d8 50%, #9ca3af 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.text-gradient-animated {
+  background: linear-gradient(90deg, #ffffff, #d4d4d8, #8e8e96, #ffffff);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradient-pan 8s linear infinite;
+}
+
+/* Primary action — solid white (Apple-style) */
+.bg-prism {
+  background: linear-gradient(180deg, #ffffff 0%, #e6e6ea 100%);
+}
+
+.glow {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 24px 80px -24px rgba(255, 255, 255, 0.16);
+}
+
+/* ------------------------------------------------------------
+   Grid & dots backdrops (neutral)
+   ------------------------------------------------------------ */
+
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 46px 46px;
+}
+
+.bg-dots {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+/* ------------------------------------------------------------
+   Aurora mesh — deep space: near-black with faint nebula hints
+   ------------------------------------------------------------ */
+
+.mesh {
+  background:
+    radial-gradient(55% 45% at 14% 6%, rgba(255, 255, 255, 0.08), transparent 62%),
+    radial-gradient(42% 42% at 86% 10%, rgba(99, 88, 200, 0.1), transparent 60%),
+    radial-gradient(58% 52% at 80% 80%, rgba(255, 255, 255, 0.05), transparent 64%),
+    radial-gradient(48% 48% at 16% 92%, rgba(44, 68, 138, 0.09), transparent 62%);
+}
+
+/* ------------------------------------------------------------
+   Starfield — twinkling stars for the "space" depth
+   ------------------------------------------------------------ */
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.15; transform: scale(0.8); }
+  50% { opacity: 0.9; transform: scale(1.15); }
+}
+
+.star {
+  position: absolute;
+  border-radius: 9999px;
+  background: #ffffff;
+  pointer-events: none;
+  animation: twinkle 5s ease-in-out infinite;
+}
+
+/* ------------------------------------------------------------
+   Film grain — subtle cinematic texture
+   ------------------------------------------------------------ */
+
+.grain {
+  position: relative;
+}
+
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+/* ------------------------------------------------------------
+   Aurora orbs (soft white / cool gray)
+   ------------------------------------------------------------ */
+
+.orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(90px);
+  pointer-events: none;
+  will-change: transform;
+}
+
+@keyframes float-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(60px, -70px) scale(1.12); }
+  66% { transform: translate(-50px, 40px) scale(0.92); }
+}
+
+@keyframes float-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40% { transform: translate(-70px, 60px) scale(1.1); }
+  70% { transform: translate(40px, -50px) scale(0.9); }
+}
+
+@keyframes float-c {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(50px, 50px) scale(1.15); }
+}
+
+.orb-float-a { animation: float-a 22s ease-in-out infinite; }
+.orb-float-b { animation: float-b 28s ease-in-out infinite; }
+.orb-float-c { animation: float-c 34s ease-in-out infinite; }
+
+/* ------------------------------------------------------------
+   Floating / bobbing elements
+   ------------------------------------------------------------ */
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+}
+
+.float-slow { animation: bob 7s ease-in-out infinite; }
+.float-slower { animation: bob 10s ease-in-out infinite; }
+
+@keyframes chip-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-16px); }
+}
+
+@keyframes chip-sway {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-10px) rotate(2.5deg); }
+}
+
+.floating-chip {
+  position: absolute;
+  z-index: 20;
+}
+
+.chip-bob { animation: chip-bob 6s ease-in-out infinite; }
+.chip-sway { animation: chip-sway 7s ease-in-out infinite; }
+
+/* ------------------------------------------------------------
+   Rise-in entrance
+   ------------------------------------------------------------ */
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: none; }
+}
+
+.rise {
+  animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ------------------------------------------------------------
+   Spotlight (mouse-follow highlight)
+   ------------------------------------------------------------ */
+
+.spotlight {
+  position: relative;
+  /* NOTE: no overflow:hidden here — the ::after highlight is already clipped
+     by its own border-radius, and hiding overflow was cropping the
+     "How it works" step number badges that peek above the card. */
+}
+
+.spotlight::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    560px circle at var(--x, 50%) var(--y, 50%),
+    rgba(255, 255, 255, 0.1),
+    transparent 42%
+  );
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.spotlight:hover::after {
+  opacity: 1;
+}
+
+/* ------------------------------------------------------------
+   Shine sweep (crystal reflection on buttons)
+   ------------------------------------------------------------ */
+
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shine::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -80%;
+  width: 45%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(0, 0, 0, 0.18),
+    transparent
+  );
+  transform: skewX(-22deg);
+  transition: left 0.65s ease;
+}
+
+.btn-shine:hover::before {
+  left: 135%;
+}
+
+/* ------------------------------------------------------------
+   Animated chrome border (silver shimmer)
+   ------------------------------------------------------------ */
+
+.gradient-border {
+  position: relative;
+}
+
+.gradient-border::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--angle),
+    rgba(255, 255, 255, 0.5),
+    rgba(255, 255, 255, 0.06),
+    rgba(255, 255, 255, 0.32),
+    rgba(255, 255, 255, 0.06),
+    rgba(255, 255, 255, 0.5)
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  animation: spin-border 8s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes spin-border {
+  to { --angle: 360deg; }
+}
+
+@keyframes gradient-pan {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 220% 50%; }
+}
+
+/* ------------------------------------------------------------
+   Prism glint — thin white reflection streak
+   ------------------------------------------------------------ */
+
+.prism-glint {
+  position: relative;
+}
+
+.prism-glint::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.14) 44%,
+    rgba(255, 255, 255, 0.03) 56%,
+    transparent 72%
+  );
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------
+   Marquee
+   ------------------------------------------------------------ */
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 32s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* ------------------------------------------------------------
+   Scroll reveal
+   ------------------------------------------------------------ */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ------------------------------------------------------------
+   Pulsing live dot
+   ------------------------------------------------------------ */
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.5); }
+  70% { box-shadow: 0 0 0 7px rgba(255, 255, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+}
+
+.live-dot {
+  background: #ffffff;
+  animation: pulse-ring 2.2s ease-out infinite;
+}
+
+/* ------------------------------------------------------------
+   Scrollbar
+   ------------------------------------------------------------ */
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0d0d10;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a2a30;
+  border-radius: 9999px;
+  border: 2px solid #0d0d10;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+/* Recharts tooltip tweaks */
+.recharts-default-tooltip {
+  border-radius: 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: rgba(20, 20, 24, 0.92) !important;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
