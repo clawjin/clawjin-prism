@@ -1,4 +1,12 @@
 # dependencies
+.env
+*.env
+node_modules/
+.next/
+out/
+__pycache__/
+logs/
+target/
 /node_modules
 /.pnp
 .pnp.js
