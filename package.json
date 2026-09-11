@@ -1,23 +1,30 @@
 {
-  "name": "nextjs-postgresql-template",
+  "name": "data-pipeline",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push"
   },
   "dependencies": {
     "dotenv": "17.3.1",
     "drizzle-orm": "0.45.2",
+    "jose": "^6.2.9",
     "lucide-react": "^1.31.0",
     "next": "16.2.6",
     "pg": "8.20.0",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "recharts": "^3.10.1",
-    "stripe": "^22.5.0"
+    "stripe": "^22.5.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.1.17",
@@ -30,6 +37,7 @@
     "eslint-config-next": "16.2.6",
     "postcss": "8.5.8",
     "tailwindcss": "4.1.17",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "^4.0.16"
   }
 }

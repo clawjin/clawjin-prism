@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1786721694816,
-      "tag": "0000_lumpy_archangel",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1786772745461,
-      "tag": "0001_acoustic_mad_thinker",
+      "when": 1787420243905,
+      "tag": "0000_baseline",
       "breakpoints": true
     }
   ]

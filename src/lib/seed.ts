@@ -1,15 +1,21 @@
+// src/lib/seed.ts
+// Clawjin Prism — Demo Workspace Seeder
+// ONLY used for /demo page — never for real user accounts
+
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import {
   activityLog,
-  adSpend,
+  normalizedAdSpend,
   alerts,
-  connections,
-  customers,
-  orders,
+  platformConnections,
+  normalizedCustomers,
+  normalizedOrders,
 } from "@/db/schema";
 import { computeSegment } from "@/lib/segments";
+import { toCents } from "@/lib/money";
+import { hashEmail } from "@/lib/hash";
 
-// Deterministic PRNG so every seeded workspace looks stable and repeatable.
 function mulberry32(seed: number) {
   return function () {
     seed |= 0;
@@ -21,203 +27,308 @@ function mulberry32(seed: number) {
 }
 
 const FIRST_NAMES = [
-  "Ava", "Liam", "Maya", "Noah", "Zoe", "Ethan", "Isla", "Lucas", "Nora",
-  "Mason", "Chloe", "Logan", "Ruby", "Elijah", "Sofia", "Carter", "Ivy",
-  "Owen", "Lily", "Jackson", "Hazel", "Aiden", "Ella", "Grayson",
+  "Ava","Liam","Maya","Noah","Zoe","Ethan","Isla","Lucas","Nora",
+  "Mason","Chloe","Logan","Ruby","Elijah","Sofia","Carter","Ivy",
+  "Owen","Lily","Jackson","Hazel","Aiden","Ella","Grayson",
 ];
 
 const LAST_NAMES = [
-  "Chen", "Patel", "Kim", "Garcia", "Nguyen", "Smith", "Brown", "Lopez",
-  "Davis", "Wilson", "Moore", "Taylor", "Martinez", "Anderson", "Thomas",
-  "Walker", "Hall", "Allen", "Young", "King", "Wright", "Scott", "Green",
-  "Baker",
+  "Chen","Patel","Kim","Garcia","Nguyen","Smith","Brown","Lopez",
+  "Davis","Wilson","Moore","Taylor","Martinez","Anderson","Thomas",
 ];
 
-const DOMAINS = ["gmail.com", "yahoo.com", "outlook.com", "icloud.com", "proton.me"];
+const DOMAINS = ["gmail.com","yahoo.com","outlook.com","icloud.com"];
 
-// Daily ad-spend bases are tuned so the seeded business is HEALTHY:
-// revenue ≈ $670k, ad spend ≈ $230k → blended ROAS ≈ 2.9x, CAC ≈ $34,
-// positive contribution margin. (Spend = base × growth × seasonal × noise.)
 const CHANNELS = [
-  { name: "Meta", base: 450, growth: 0.55, cpm: 11, ctr: 0.012, cvr: 0.027, weight: 0.44 },
-  { name: "Google", base: 255, growth: 0.42, cpm: 8.5, ctr: 0.022, cvr: 0.034, weight: 0.3 },
-  { name: "TikTok", base: 116, growth: 0.85, cpm: 6.2, ctr: 0.018, cvr: 0.019, weight: 0.26 },
-];
+  { name: "meta",   base: 450, growth: 0.55, cpm: 11,  ctr: 0.012, cvr: 0.027, weight: 0.44 },
+  { name: "google", base: 255, growth: 0.42, cpm: 8.5, ctr: 0.022, cvr: 0.034, weight: 0.30 },
+  { name: "tiktok", base: 116, growth: 0.85, cpm: 6.2, ctr: 0.018, cvr: 0.019, weight: 0.26 },
+] as const;
 
-const DAYS = 150;
+type Channel = "meta" | "google" | "tiktok";
+
+const DAYS   = 150;
 const DAY_MS = 86_400_000;
 
-function pickChannel(rng: () => number): string {
+function pickChannel(rng: () => number): Channel {
   const r = rng();
   let acc = 0;
   for (const c of CHANNELS) {
     acc += c.weight;
     if (r <= acc) return c.name;
   }
-  return "Meta";
+  return "meta";
 }
 
 export async function seedWorkspace(userId: number) {
-  const rng = mulberry32(0x9e3779b9 ^ userId);
-  const now = new Date();
+  const rng     = mulberry32(0x9e3779b9 ^ userId);
+  const now     = new Date();
   const startMs = now.getTime() - DAYS * DAY_MS;
 
-  // ---- Customers ------------------------------------------------------
-  const customerCount = 2400;
-  const custLocal: {
-    email: string;
-    name: string;
-    firstOrderAt: Date;
-    lastOrderAt: Date;
-    orderCount: number;
-    totalSpend: number;
-    segment: string;
-    orderRows: {
-      orderNumber: string;
-      revenue: number;
-      cogs: number;
-      shipping: number;
-      channel: string;
-      status: string;
-      createdAt: Date;
-    }[];
-  }[] = [];
+  // ── Platform connections ──────────────────────────────────────────────────
+  await db.insert(platformConnections).values([
+    {
+      userId,
+      platform:          "shopify",
+      displayName:       "Demo Shopify Store",
+      status:            "active",
+      externalAccountId: "demo-shop.myshopify.com",
+      shopDomain:        "demo-shop.myshopify.com",
+      lastSyncAt:        new Date(now.getTime() - 8 * 60_000),
+    },
+    {
+      userId,
+      platform:          "meta",
+      displayName:       "Demo Meta Ads",
+      status:            "active",
+      externalAccountId: "act_demo123456",
+      lastSyncAt:        new Date(now.getTime() - 12 * 60_000),
+    },
+    {
+      userId,
+      platform:          "google",
+      displayName:       "Demo Google Ads",
+      status:            "active",
+      externalAccountId: "google-demo-account",
+      lastSyncAt:        new Date(now.getTime() - 14 * 60_000),
+    },
+  ]).onConflictDoNothing();
+
+  // Get shopify connection id
+  const [shopifyConn] = await db
+    .select()
+    .from(platformConnections)
+    .where(and(
+      eq(platformConnections.userId, userId),
+      eq(platformConnections.platform, "shopify")
+    ))
+    .limit(1);
+
+  const connId = shopifyConn?.id ?? 1;
+
+  // ── Customers + Orders ────────────────────────────────────────────────────
+  const customerCount = 300;
+
+  type OrderRow = {
+    externalOrderId:   string;
+    orderNumber:       string;
+    subtotalCents:     number;
+    shippingCents:     number;
+    taxCents:          number;
+    totalCents:        number;
+    netRevenueCents:   number;
+    refundedCents:     number;
+    attributionSource: Channel | "direct";
+    orderedAt:         Date;
+    status:            "paid" | "refunded";
+    isFirstOrder:      boolean;
+  };
+
+  type LocalCustomer = {
+    email:             string;
+    name:              string;
+    emailHash:         string;
+    firstOrderAt:      Date;
+    lastOrderAt:       Date;
+    orderCount:        number;
+    totalSpentCents:   number;
+    segment:           string;
+    acquisitionSource: Channel;
+    orders:            OrderRow[];
+  };
+
+  const localCustomers: LocalCustomer[] = [];
 
   for (let i = 0; i < customerCount; i++) {
-    const first = FIRST_NAMES[Math.floor(rng() * FIRST_NAMES.length)];
-    const last = LAST_NAMES[Math.floor(rng() * LAST_NAMES.length)];
-    const name = `${first} ${last}`;
-    const email = `${first.toLowerCase()}.${last.toLowerCase()}${Math.floor(rng() * 90) + 10}@${DOMAINS[Math.floor(rng() * DOMAINS.length)]}`;
+    const first  = FIRST_NAMES[Math.floor(rng() * FIRST_NAMES.length)]!;
+    const last   = LAST_NAMES[Math.floor(rng() * LAST_NAMES.length)]!;
+    const name   = `${first} ${last}`;
+    const email  = `${first.toLowerCase()}.${last.toLowerCase()}${
+      Math.floor(rng() * 90) + 10
+    }@${DOMAINS[Math.floor(rng() * DOMAINS.length)]}`;
 
     const r = rng();
     const orderCount =
-      r < 0.28 ? 1 : r < 0.5 ? 2 : r < 0.72 ? 3 : r < 0.88 ? 4 : 5 + Math.floor(rng() * 4);
-    const aov = 60 + rng() * 80;
+      r < 0.28 ? 1
+      : r < 0.5  ? 2
+      : r < 0.72 ? 3
+      : r < 0.88 ? 4
+      : 5 + Math.floor(rng() * 3);
 
-    const firstDay = Math.floor(rng() * 138);
-    const orderRows: typeof custLocal[number]["orderRows"] = [];
+    const aovDollars = 60 + rng() * 80;
+    const firstDay   = Math.floor(rng() * 130);
+    const channel    = pickChannel(rng);
+    const orderList: OrderRow[] = [];
     let day = firstDay;
+
     for (let k = 0; k < orderCount; k++) {
-      if (k === 0) day = firstDay;
-      else day = day + 6 + Math.floor(rng() * 28);
+      if (k > 0) day = day + 6 + Math.floor(rng() * 28);
       if (day > DAYS - 1) break;
 
-      const revenue = Math.max(16, aov + (rng() - 0.5) * 34);
-      const cogs = revenue * (0.3 + rng() * 0.08);
-      const shipping = 4.9 + rng() * 7;
-      const status = rng() < 0.965 ? "paid" : "refunded";
-      orderRows.push({
-        orderNumber: `ORD-${1000 + i * 10 + k}`,
-        revenue: Math.round(revenue * 100) / 100,
-        cogs: Math.round(cogs * 100) / 100,
-        shipping: Math.round(shipping * 100) / 100,
-        channel: pickChannel(rng),
-        status,
-        createdAt: new Date(startMs + day * DAY_MS),
+      const revenueDollars  = Math.max(20, aovDollars + (rng() - 0.5) * 40);
+      const shippingDollars = 5 + rng() * 10;
+      const subtotalCents   = toCents(revenueDollars);
+      const shippingCents   = toCents(shippingDollars);
+      const taxCents        = Math.round(subtotalCents * 0.08);
+      const totalCents      = subtotalCents + shippingCents + taxCents;
+      const isRefunded      = rng() < 0.035;
+
+      orderList.push({
+        externalOrderId:   `demo-${userId}-${i}-${k}`,
+        orderNumber:       `#${1000 + i * 10 + k}`,
+        subtotalCents,
+        shippingCents,
+        taxCents,
+        totalCents,
+        netRevenueCents:   isRefunded ? 0 : totalCents,
+        refundedCents:     isRefunded ? totalCents : 0,
+        attributionSource: k === 0 ? channel : "direct",
+        orderedAt:         new Date(startMs + day * DAY_MS),
+        status:            isRefunded ? "refunded" : "paid",
+        isFirstOrder:      k === 0,
       });
     }
 
-    if (orderRows.length === 0) orderRows.push(orderRows[0] ?? { orderNumber: `ORD-${i}`, revenue: 40, cogs: 14, shipping: 6, channel: "Meta", status: "paid", createdAt: new Date(startMs + firstDay * DAY_MS) });
+    if (orderList.length === 0) continue;
 
-    const paid = orderRows.filter((o) => o.status === "paid");
-    const totalSpend = paid.reduce((s, o) => s + o.revenue, 0);
-    const lastOrderAt = orderRows[orderRows.length - 1].createdAt;
-    const recencyDays = Math.round((now.getTime() - lastOrderAt.getTime()) / DAY_MS);
+    const paidOrders      = orderList.filter((o) => o.status === "paid");
+    const totalSpentCents = paidOrders.reduce((s, o) => s + o.totalCents, 0);
+    const lastOrderAt     = orderList[orderList.length - 1]!.orderedAt;
+    const recencyDays     = Math.round(
+      (now.getTime() - lastOrderAt.getTime()) / DAY_MS
+    );
 
-    custLocal.push({
+    localCustomers.push({
       email,
       name,
-      firstOrderAt: orderRows[0].createdAt,
+      emailHash:         hashEmail(email)!,
+      firstOrderAt:      orderList[0]!.orderedAt,
       lastOrderAt,
-      orderCount: paid.length,
-      totalSpend: Math.round(totalSpend * 100) / 100,
-      segment: computeSegment({ orderCount: paid.length, totalSpend, recencyDays }),
-      orderRows,
+      orderCount:        paidOrders.length,
+      totalSpentCents,
+      segment:           computeSegment({
+        orderCount:  paidOrders.length,
+        totalSpend:  totalSpentCents / 100,
+        recencyDays,
+      }),
+      acquisitionSource: channel,
+      orders:            orderList,
     });
   }
 
-  const insertedCustomers = await db
-    .insert(customers)
-    .values(
-      custLocal.map((c) => ({
+  // Insert customers
+  const BATCH = 50;
+  for (let i = 0; i < localCustomers.length; i += BATCH) {
+    await db.insert(normalizedCustomers).values(
+      localCustomers.slice(i, i + BATCH).map((c) => ({
         userId,
-        email: c.email,
-        name: c.name,
-        firstOrderAt: c.firstOrderAt,
-        lastOrderAt: c.lastOrderAt,
-        orderCount: c.orderCount,
-        totalSpend: c.totalSpend,
-        segment: c.segment,
-      })),
-    )
-    .returning({ id: customers.id });
+        emailHash:         c.emailHash,
+        email:             c.email,
+        name:              c.name,
+        firstOrderAt:      c.firstOrderAt,
+        lastOrderAt:       c.lastOrderAt,
+        orderCount:        c.orderCount,
+        totalSpentCents:   c.totalSpentCents,
+        acquisitionSource: c.acquisitionSource,
+        segment:           c.segment,
+      }))
+    ).onConflictDoNothing();
+  }
 
-  // ---- Orders (linked to real customer ids) ---------------------------
-  const orderRowsFlat = custLocal.flatMap((c, idx) =>
-    c.orderRows.map((o) => ({
+  // Insert orders
+  const allOrders = localCustomers.flatMap((c) =>
+    c.orders.map((o) => ({
       userId,
-      customerId: insertedCustomers[idx].id,
-      orderNumber: o.orderNumber,
-      revenue: o.revenue,
-      cogs: o.cogs,
-      shipping: o.shipping,
-      channel: o.channel,
-      status: o.status,
-      createdAt: o.createdAt,
-    })),
+      connectionId:      connId,
+      platform:          "shopify" as const,
+      externalOrderId:   o.externalOrderId,
+      orderNumber:       o.orderNumber,
+      status:            o.status,
+      currency:          "USD",
+      subtotalCents:     o.subtotalCents,
+      discountCents:     0,
+      shippingCents:     o.shippingCents,
+      taxCents:          o.taxCents,
+      totalCents:        o.totalCents,
+      refundedCents:     o.refundedCents,
+      netRevenueCents:   o.netRevenueCents,
+      attributionSource: o.attributionSource,
+      isFirstOrder:      o.isFirstOrder,
+      lineItemsCount:    1,
+      orderedAt:         o.orderedAt,
+    }))
   );
-  await db.insert(orders).values(orderRowsFlat);
 
-  // ---- Ad spend (daily grain per channel) -----------------------------
-  const spendRows: typeof adSpend.$inferInsert[] = [];
+  for (let i = 0; i < allOrders.length; i += 100) {
+    await db.insert(normalizedOrders)
+      .values(allOrders.slice(i, i + 100))
+      .onConflictDoNothing();
+  }
+
+  // ── Ad spend ──────────────────────────────────────────────────────────────
+  const spendRows: typeof normalizedAdSpend.$inferInsert[] = [];
+
   for (let d = 0; d < DAYS; d++) {
-    // Mild growth (1x → 1.5x) so every trailing window — including "this month"
-    // and "last 24 hours" — stays profitable and the demo reads as a healthy,
-    // scaling brand instead of a loss-making one.
     const growthFactor = 1 + (d / DAYS) * 0.5;
-    const weekend = d % 7 === 5 || d % 7 === 6;
-    const seasonal = 1 + (weekend ? 0.18 : -0.04);
+    const weekend      = d % 7 === 5 || d % 7 === 6;
+    const seasonal     = 1 + (weekend ? 0.18 : -0.04);
+    const spendDate    = new Date(startMs + d * DAY_MS)
+      .toISOString().split("T")[0]!;
+
     for (const ch of CHANNELS) {
-      const noise = 0.82 + rng() * 0.36;
-      const spend = ch.base * growthFactor * seasonal * noise;
-      const impressions = Math.round((spend / ch.cpm) * 1000);
-      const clicks = Math.round(impressions * ch.ctr * (0.9 + rng() * 0.2));
-      const conversions = Math.round(clicks * ch.cvr * (0.85 + rng() * 0.3));
+      const noise        = 0.82 + rng() * 0.36;
+      const spendDollars = ch.base * growthFactor * seasonal * noise;
+      const impressions  = Math.round((spendDollars / ch.cpm) * 1000);
+      const clicks       = Math.round(impressions * ch.ctr * (0.9 + rng() * 0.2));
+      const conversions  = Math.round(clicks * ch.cvr * (0.85 + rng() * 0.3));
+
       spendRows.push({
         userId,
-        channel: ch.name,
-        date: new Date(startMs + d * DAY_MS),
-        spend: Math.round(spend * 100) / 100,
+        connectionId:         connId,
+        platform:             ch.name,
+        campaignId:           `demo-${ch.name}-${d}`,
+        campaignName:         `Demo ${ch.name} Campaign`,
+        spendDate,
+        currency:             "USD",
+        spendCents:           toCents(spendDollars),
         impressions,
         clicks,
         conversions,
+        conversionValueCents: toCents(spendDollars * 3.2),
       });
     }
   }
-  await db.insert(adSpend).values(spendRows);
 
-  // ---- Default integrations -------------------------------------------
-  await db.insert(connections).values([
-    { userId, provider: "shopify", name: "Shopify Orders", status: "connected", lastSyncAt: new Date(now.getTime() - 8 * 60_000) },
-    { userId, provider: "meta", name: "Meta Ads", status: "connected", lastSyncAt: new Date(now.getTime() - 12 * 60_000) },
-    { userId, provider: "google", name: "Google Ads", status: "connected", lastSyncAt: new Date(now.getTime() - 14 * 60_000) },
-    { userId, provider: "tiktok", name: "TikTok Ads", status: "connected", lastSyncAt: new Date(now.getTime() - 20 * 60_000) },
-    { userId, provider: "klaviyo", name: "Klaviyo Email", status: "pending", lastSyncAt: null },
-  ]);
+  for (let i = 0; i < spendRows.length; i += 100) {
+    await db.insert(normalizedAdSpend)
+      .values(spendRows.slice(i, i + 100))
+      .onConflictDoNothing();
+  }
 
-  // ---- Executive briefing alerts ---------------------------------------
+  // ── Alerts ────────────────────────────────────────────────────────────────
   await db.insert(alerts).values([
-    { userId, severity: "critical", title: "Blended CAC up 12.4% week-over-week", message: "Total ad spend outpaced completed orders. Meta CPMs rose 9% while conversion rate fell to 2.3%. Review the Meta prospecting budget.", read: false },
-    { userId, severity: "warning", title: "TikTok ROAS slipped below 1.5x", message: "TikTok blended ROAS is 1.42x over the last 7 days. Consider pausing underperforming creative sets.", read: false },
-    { userId, severity: "success", title: "30-day cohort retention up 3.1pts", message: "The latest monthly cohort is repurchasing at 34.2% by day 30 — a 3.1 point lift versus the previous cohort.", read: false },
-    { userId, severity: "info", title: "Daily ingestion completed", message: "148 orders and 3 channel spend feeds synced at 06:00 UTC. All dbt marts refreshed successfully.", read: true },
-  ]);
+    {
+      userId,
+      severity: "success",
+      title:    "Welcome to Clawjin Prism Demo",
+      message:  "This is sample data. Connect your Shopify store to see your real numbers.",
+      read:     false,
+    },
+    {
+      userId,
+      severity: "info",
+      title:    "Blended ROAS: 3.8x",
+      message:  "Your Meta campaigns are returning 3.8x on ad spend over the last 30 days.",
+      read:     false,
+    },
+  ]).onConflictDoNothing();
 
-  // ---- Activity log ----------------------------------------------------
+  // ── Activity log ──────────────────────────────────────────────────────────
   await db.insert(activityLog).values([
-    { userId, action: "ingestion.run", detail: "Synced Shopify orders + 3 ad channels (148 rows)" },
-    { userId, action: "dbt.run", detail: "Refreshed fct_daily_unit_economics + cohort marts" },
-    { userId, action: "briefing.dispatch", detail: "Daily executive briefing delivered" },
-    { userId, action: "workspace.create", detail: "Provisioned new workspace with demo dataset" },
-  ]);
+    { userId, action: "demo.created",   detail: "Demo workspace initialized" },
+    { userId, action: "shopify.synced", detail: "Synced 300 demo orders" },
+    { userId, action: "meta.synced",    detail: "Synced 150 days of demo ad spend" },
+  ]).onConflictDoNothing();
+
+  console.log(`[seed] ✓ Demo workspace seeded for user ${userId}`);
 }

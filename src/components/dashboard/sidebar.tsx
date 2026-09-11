@@ -53,12 +53,12 @@ export function Sidebar({
     <>
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-white/5 bg-[#0b0b0d]/70 backdrop-blur-2xl lg:flex">
-        <div className="flex h-16 items-center gap-2.5 border-b border-white/5 px-5">
+        <Link href="/" className="flex h-16 items-center gap-2.5 border-b border-white/5 px-5 transition hover:opacity-80">
           <LogoMark className="h-8 w-8" />
           <span className="text-[15px] font-semibold tracking-tight text-white">
             Clawjin <span className="text-gradient">Prism</span>
           </span>
-        </div>
+        </Link>
 
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
           {NAV.map((item) => {
@@ -114,12 +114,12 @@ export function Sidebar({
       {/* Mobile header */}
       <header className="sticky top-0 z-30 border-b border-white/5 bg-[#0b0b0d]/70 backdrop-blur-2xl lg:hidden">
         <div className="flex h-14 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 transition hover:opacity-80">
             <LogoMark className="h-7 w-7" />
             <span className="text-sm font-semibold text-white">
               Clawjin <span className="text-gradient">Prism</span>
             </span>
-          </div>
+          </Link>
           <div className="flex items-center gap-2">
             <span
               className={`rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ring-1 ring-inset ${PLAN_TONE[user.plan] ?? PLAN_TONE.trial}`}

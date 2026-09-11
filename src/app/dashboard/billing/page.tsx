@@ -29,7 +29,8 @@ export default async function BillingPage({
 
   const paymentItems: PaymentRow[] = rows.map((p) => ({
     id: p.id,
-    amount: p.amount,
+    // REPLACE WITH:
+amount: p.amountCents / 100,   // Convert cents to dollars for display only
     currency: p.currency,
     status: p.status,
     provider: p.provider,

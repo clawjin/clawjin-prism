@@ -1,0 +1,9 @@
+{
+  "crons": [
+    { "path": "/api/cron/sync-worker", "schedule": "0 0 */2 * *" },
+    { "path": "/api/cron/aggregation", "schedule": "0 1 */2 * *" },
+    { "path": "/api/cron/incremental-sync", "schedule": "30 2 */2 * *" },
+    { "path": "/api/cron/token-refresh", "schedule": "0 3 */2 * *" },
+    { "path": "/api/cron/cleanup", "schedule": "0 4 * * 0" }
+  ]
+}

@@ -91,15 +91,30 @@ export function ConnectionsPanel({
   }
 
   async function addProvider(provider: string) {
-    const meta = metaFor(provider);
-    await run(`add-${provider}`, () =>
-      fetch("/api/connections", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider, name: meta.label }),
-      }),
+  if (provider === "shopify") {
+    const shop = window.prompt(
+      "Enter your Shopify store domain (example: my-store.myshopify.com)",
     );
+
+    if (!shop) return;
+
+    window.location.assign(
+      `/api/oauth/shopify/install?shop=${encodeURIComponent(shop)}`,
+    );
+
+    return;
   }
+
+  const meta = metaFor(provider);
+
+  await run(`add-${provider}`, () =>
+    fetch("/api/connections", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ provider, name: meta.label }),
+    }),
+  );
+}
 
   async function sync(id: number) {
     await run(`sync-${id}`, () =>

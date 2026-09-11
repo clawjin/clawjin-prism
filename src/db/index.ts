@@ -1,32 +1,36 @@
+// src/db/index.ts
+// Clawjin Prism — Database Connection
+// Uses Supabase connection pooler (port 6543)
+
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
+import * as schema from "./schema";
 
 const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl) {
-  throw new Error("DATABASE_URL is required");
+  throw new Error("DATABASE_URL is not set. Check your .env.local file.");
 }
 
-// Local databases (127.0.0.1 / localhost) don't use TLS. Hosted providers
-// (Neon, Supabase, RDS) require SSL — enable it automatically for those.
-const isLocal = /localhost|127\.0\.0\.1|::1/.test(databaseUrl);
-
 const globalForDb = globalThis as typeof globalThis & {
-  __clawjinPostgresPool?: Pool;
+  __prismPool?: Pool;
 };
 
 export const pool =
-  globalForDb.__clawjinPostgresPool ??
+  globalForDb.__prismPool ??
   new Pool({
     connectionString: databaseUrl,
-    ssl: isLocal ? undefined : { rejectUnauthorized: false },
-    max: 5,
-    idleTimeoutMillis: 30_000,
+    // Supabase pooler requires SSL
+    ssl: { rejectUnauthorized: false },
+    // Keep low for connection pooler
+    max: 3,
+    idleTimeoutMillis:    30_000,
     connectionTimeoutMillis: 10_000,
   });
 
 if (process.env.NODE_ENV !== "production") {
-  globalForDb.__clawjinPostgresPool = pool;
+  globalForDb.__prismPool = pool;
 }
 
-export const db = drizzle(pool);
+export const db = drizzle(pool, { schema });
+export { schema };

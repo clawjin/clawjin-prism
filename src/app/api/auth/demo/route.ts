@@ -3,9 +3,9 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import {
-  createSession,
+  createAuthTokens,
   hashPassword,
-  SESSION_COOKIE,
+  setAuthCookies,
   toPublicUser,
 } from "@/lib/auth";
 import { seedWorkspace } from "@/lib/seed";
@@ -47,14 +47,7 @@ export async function POST(req: Request) {
     }
   }
 
-  const token = await createSession(user.id);
+  const tokens = await createAuthTokens(user);
   const res = NextResponse.json({ user: toPublicUser(user) });
-  res.cookies.set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 30 * 24 * 60 * 60,
-  });
-  return res;
+  return setAuthCookies(res, tokens);
 }

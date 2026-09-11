@@ -1,6 +1,9 @@
+// src/app/dashboard/connections/page.tsx
+// Clawjin Prism — Data Sources page
+
 import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { connections } from "@/db/schema";
+import { platformConnections } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import {
   ConnectionsPanel,
@@ -14,15 +17,15 @@ export default async function ConnectionsPage() {
 
   const rows = await db
     .select()
-    .from(connections)
-    .where(eq(connections.userId, user.id))
-    .orderBy(desc(connections.createdAt));
+    .from(platformConnections)
+    .where(eq(platformConnections.userId, user.id))
+    .orderBy(desc(platformConnections.createdAt));
 
   const items: ConnectionItem[] = rows.map((c) => ({
-    id: c.id,
-    provider: c.provider,
-    name: c.name,
-    status: c.status,
+    id:         c.id,
+    provider:   c.platform,       // ← component expects "provider", we map from platform
+    name:       c.displayName,    // ← was c.name, now c.displayName
+    status:     c.status,
     lastSyncAt: c.lastSyncAt ? c.lastSyncAt.toISOString() : null,
   }));
 
@@ -30,11 +33,11 @@ export default async function ConnectionsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-white">
-          Data sources
+          Data Sources
         </h1>
         <p className="mt-1 text-sm text-zinc-400">
-          Connect your commerce stack. Clawjin Prism ingests, models and alerts
-          on the unified dataset.
+          Connect your commerce stack. Clawjin Prism ingests, normalises and
+          alerts on your unified dataset across every platform.
         </p>
       </div>
 
