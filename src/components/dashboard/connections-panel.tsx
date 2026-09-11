@@ -8,8 +8,6 @@ import {
   Globe,
   Music2,
   Mail,
-  ShoppingCart,
-  CreditCard,
   Plus,
   RefreshCw,
   Pause,
@@ -42,8 +40,6 @@ const PROVIDERS: ProviderMeta[] = [
   { id: "google", label: "Google Ads", desc: "Search, shopping & PMax", icon: Globe, color: "#34a853" },
   { id: "tiktok", label: "TikTok Ads", desc: "Paid social & spark ads", icon: Music2, color: "#69c9d0" },
   { id: "klaviyo", label: "Klaviyo", desc: "Email & retention flows", icon: Mail, color: "#f97316" },
-  { id: "amazon", label: "Amazon", desc: "Marketplace orders", icon: ShoppingCart, color: "#ff9900" },
-  { id: "stripe", label: "Stripe", desc: "Payments & subscriptions", icon: CreditCard, color: "#635bff" },
 ];
 
 function metaFor(provider: string): ProviderMeta {
@@ -91,37 +87,44 @@ export function ConnectionsPanel({
   }
 
   async function addProvider(provider: string) {
-  if (provider === "shopify") {
-    const shop = window.prompt(
-      "Enter your Shopify store domain (example: my-store.myshopify.com)",
+    if (provider === "shopify") {
+      const shop = window.prompt(
+        "Enter your Shopify store domain (example: my-store.myshopify.com)",
+      );
+
+      if (!shop) return;
+
+      window.location.assign(
+        `/api/oauth/shopify/install?shop=${encodeURIComponent(shop)}`,
+      );
+
+      return;
+    }
+
+    // Meta has a full OAuth consent flow — redirect to the install endpoint
+    // rather than creating a placeholder connection.
+    if (provider === "meta") {
+      window.location.assign("/api/oauth/meta/install");
+      return;
+    }
+
+    const meta = metaFor(provider);
+
+    await run(`add-${provider}`, () =>
+      fetch("/api/connections", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider, name: meta.label }),
+      }),
     );
-
-    if (!shop) return;
-
-    window.location.assign(
-      `/api/oauth/shopify/install?shop=${encodeURIComponent(shop)}`,
-    );
-
-    return;
   }
-
-  const meta = metaFor(provider);
-
-  await run(`add-${provider}`, () =>
-    fetch("/api/connections", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ provider, name: meta.label }),
-    }),
-  );
-}
 
   async function sync(id: number) {
     await run(`sync-${id}`, () =>
-      fetch(`/api/connections/${id}`, {
-        method: "PATCH",
+      fetch(`/api/connections/${id}/sync`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sync: true }),
+        body: JSON.stringify({ range: "30d" }),
       }),
     );
   }
@@ -196,7 +199,7 @@ export function ConnectionsPanel({
                   <button
                     type="button"
                     title={paused ? "Resume" : "Pause"}
-                    onClick={() => toggle(c.id, paused ? "connected" : "paused")}
+                    onClick={() => toggle(c.id, paused ? "active" : "paused")}
                     disabled={busy !== null}
                     className="rounded-lg p-2 text-zinc-500 transition hover:bg-white/5 hover:text-white disabled:opacity-50"
                   >
