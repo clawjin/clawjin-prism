@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 const siteUrl =
-  process.env.SITE_URL ?? "https://clawjin-prism.vercel.app";
+  process.env.SITE_URL?.trim() || "https://clawjin-prism.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
