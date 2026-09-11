@@ -95,7 +95,7 @@ export async function GET(req: Request) {
     // 5. Register webhook subscriptions so real-time updates flow in.
     //    Best-effort: polling sync still works without them.
     const appUrl =
-      process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? url.origin;
+      process.env.APP_URL ?? process.env.SITE_URL ?? url.origin;
     fetch(`https://${bound.shopDomain}/admin/api/2024-10/webhooks.json`, {
       method: "POST",
       headers: {
